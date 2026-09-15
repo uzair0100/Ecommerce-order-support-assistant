@@ -1,10 +1,12 @@
 """
 Ollama API client for GadgetMart assistant.
 Uses /api/chat endpoint with structured role messages.
+Supports both streaming and non-streaming modes.
 """
 
-import requests
-from typing import List, Dict, Optional
+import json
+import httpx
+from typing import List, Dict, Optional, AsyncIterator
 from backend.config import (
     OLLAMA_CHAT_ENDPOINT,
     MODEL_NAME,
@@ -28,26 +30,77 @@ class OllamaClient:
         self.temperature = temperature
         self.num_ctx = num_ctx
     
+    async def chat_stream(
+        self,
+        messages: List[Dict[str, str]]
+    ) -> AsyncIterator[Dict[str, any]]:
+        """
+        Send a streaming chat request to Ollama.
+        
+        Args:
+            messages: List of message dicts with 'role' and 'content'
+        
+        Yields:
+            Dict chunks from Ollama with 'content', 'done', etc.
+        """
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "stream": True,
+            "options": {
+                "temperature": self.temperature,
+                "num_ctx": self.num_ctx
+            }
+        }
+        
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(10.0, read=180.0)) as client:
+                async with client.stream(
+                    "POST",
+                    self.base_url,
+                    json=payload
+                ) as response:
+                    response.raise_for_status()
+                    
+                    async for line in response.aiter_lines():
+                        if not line.strip():
+                            continue
+                        
+                        try:
+                            chunk = json.loads(line)
+                            yield chunk
+                        except json.JSONDecodeError:
+                            continue
+        
+        except httpx.TimeoutException:
+            raise Exception("Ollama request timed out")
+        except httpx.RequestError as e:
+            raise Exception(f"Ollama request failed: {str(e)}")
+    
     def chat(
         self,
         messages: List[Dict[str, str]],
         stream: bool = False
     ) -> Optional[str]:
         """
-        Send a chat request to Ollama.
+        Send a non-streaming chat request to Ollama (Phase III compatibility).
         
         Args:
             messages: List of message dicts with 'role' and 'content'
-                     Roles: 'system', 'user', 'assistant'
-            stream: Whether to stream the response (False for Phase III)
+            stream: Must be False for this method
         
         Returns:
             Generated response text, or None if error
         """
+        if stream:
+            raise NotImplementedError("Use chat_stream() for streaming")
+        
+        import requests
+        
         payload = {
             "model": self.model,
             "messages": messages,
-            "stream": stream,
+            "stream": False,
             "options": {
                 "temperature": self.temperature,
                 "num_ctx": self.num_ctx
@@ -58,23 +111,17 @@ class OllamaClient:
             response = requests.post(
                 self.base_url,
                 json=payload,
-                timeout=(10, 180)  # 10s connect, 180s read (3 min for slow generations)
+                timeout=(10, 180)
             )
             response.raise_for_status()
             
-            if stream:
-                # Phase IV will implement streaming
-                raise NotImplementedError("Streaming not yet implemented")
-            else:
-                # Non-streaming response
-                data = response.json()
-                message_content = data.get("message", {}).get("content", "")
-                
-                # Fallback: check for 'response' field (some Ollama versions)
-                if not message_content:
-                    message_content = data.get("response", "")
-                
-                return message_content
+            data = response.json()
+            message_content = data.get("message", {}).get("content", "")
+            
+            if not message_content:
+                message_content = data.get("response", "")
+            
+            return message_content
         
         except requests.exceptions.Timeout:
             print(f"[OllamaClient] Timeout calling {self.base_url}")
@@ -96,7 +143,7 @@ class OllamaClient:
             True if Ollama responds, False otherwise
         """
         try:
-            # Use /api/tags to check if Ollama is running
+            import requests
             tags_url = self.base_url.replace("/api/chat", "/api/tags")
             response = requests.get(tags_url, timeout=5)
             return response.status_code == 200

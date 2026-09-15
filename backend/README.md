@@ -1,16 +1,26 @@
-# GadgetMart Backend - Phase III
+# GadgetMart Backend - Phase III & IV
 
 ## Overview
 
-Phase III implements the conversation manager and prompt orchestration for the GadgetMart assistant.
+Phase III implements conversation management and prompt orchestration.
+Phase IV adds FastAPI REST and WebSocket API with streaming responses.
 
-**Features:**
+**Phase III Features:**
 - Session management with isolated conversation state
 - Bounded conversation history with automatic trimming
 - Turn-taking guard (prevents concurrent requests per session)
 - Structured system prompts using GadgetMart store facts
 - Session summaries for context retention
 - Ollama integration using `/api/chat` endpoint
+
+**Phase IV Features:**
+- FastAPI application with REST and WebSocket endpoints
+- `/health` endpoint for monitoring
+- `/ws/chat` WebSocket with streaming responses
+- JSON protocol: start → chunk → done/error events
+- Asynchronous request handling
+- Validation and error handling
+- Session auto-creation and reset
 
 **Storage:**
 - In-memory session storage (sessions lost on restart)
@@ -30,10 +40,14 @@ backend/
 ├── __init__.py                 # Package initialization
 ├── config.py                   # Configuration settings
 ├── gadgetmart_facts.txt        # Store facts (loaded into system prompt)
-├── ollama_client.py            # Ollama API client
+├── ollama_client.py            # Ollama API client (streaming + non-streaming)
 ├── prompt_builder.py           # Prompt construction and history management
 ├── conversation_manager.py     # Session and conversation orchestration
-├── cli_test.py                 # CLI test harness
+├── main.py                     # FastAPI application (Phase IV)
+├── websocket_handler.py        # WebSocket streaming handler (Phase IV)
+├── cli_test.py                 # CLI test harness (Phase III)
+├── test_websocket_client.py    # WebSocket manual test client (Phase IV)
+├── test_ollama_connection.py   # Ollama connection tester
 ├── requirements.txt            # Python dependencies
 └── README.md                   # This file
 ```
@@ -76,44 +90,211 @@ ollama pull qwen2.5:1.5b-instruct
 
 ### Automated Tests (pytest)
 
-Run all tests:
+**Run all tests:**
 
 ```bash
-pytest tests/
+pytest tests/ -v
 ```
 
-Run specific test file:
+**Run Phase III tests only:**
 
 ```bash
-pytest tests/test_conversation_manager.py -v
+pytest tests/test_conversation_manager.py tests/test_prompt_builder.py -v
 ```
 
-Run with coverage:
+**Run Phase IV API tests:**
+
+```bash
+pytest tests/test_websocket_api.py -v
+```
+
+**Run with live Ollama (slower, requires Ollama running):**
+
+```bash
+pytest tests/test_websocket_api.py --run-live -v
+```
+
+**Run with coverage:**
 
 ```bash
 pytest tests/ --cov=backend --cov-report=html
 ```
 
-### Manual CLI Test Harness
+### Manual Testing
+
+**Phase III CLI Test Harness:**
 
 ```bash
 python -m backend.cli_test
 ```
 
-**CLI Commands:**
-- `/reset` - Clear current session history
-- `/new` - Start a new session
-- `/info` - Show session metadata
-- `/exit` - Exit the CLI
+**Phase IV WebSocket Test Client:**
 
-**Test Scenarios:**
-1. Product inquiry with topic switch
-2. Multi-turn context retention
-3. Tracking guidance (user supplies status)
-4. Return policy questions
-5. Off-topic handling
-6. Session reset
-7. History trimming (send >8 messages)
+```bash
+# Terminal 1: Start server
+python -m backend.main
+
+# Terminal 2: Run test client
+python backend/test_websocket_client.py
+```
+
+---
+
+## Running the Server (Phase IV)
+
+### Development Mode (with auto-reload):
+
+```bash
+python -m backend.main
+```
+
+Or using uvicorn directly:
+
+```bash
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Server will be available at:
+- WebSocket: `ws://localhost:8000/ws/chat`
+- Health check: `http://localhost:8000/health`
+- API docs: `http://localhost:8000/docs` (FastAPI auto-generated)
+
+---
+
+## API Documentation
+
+### REST Endpoints
+
+#### GET /health
+
+Health check endpoint.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "server_healthy": true,
+  "ollama_available": true,
+  "model": "qwen2.5:1.5b-instruct",
+  "active_sessions": 3
+}
+```
+
+**Status Codes:**
+- `200` - Server is responding
+- `503` - Server error (shouldn't happen for health check)
+
+**Notes:**
+- `status` is "healthy" if Ollama is available, "degraded" if not
+- `server_healthy` is always `true` if the endpoint responds
+- `ollama_available` shows whether the model can be reached
+- Health check does not hang waiting for Ollama
+
+---
+
+### WebSocket Endpoint
+
+#### WS /ws/chat
+
+Real-time streaming chat endpoint.
+
+**Client → Server Messages:**
+
+**Chat Message:**
+```json
+{
+  "type": "message",
+  "session_id": "uuid-or-null",
+  "content": "user message text"
+}
+```
+
+**Reset Session:**
+```json
+{
+  "type": "reset",
+  "session_id": "uuid"
+}
+```
+
+**Server → Client Events:**
+
+**Start Event:**
+```json
+{
+  "type": "start",
+  "session_id": "uuid",
+  "turn_id": "uuid"
+}
+```
+
+**Chunk Event (repeated):**
+```json
+{
+  "type": "chunk",
+  "session_id": "uuid",
+  "turn_id": "uuid",
+  "content": "text chunk from Ollama"
+}
+```
+
+**Done Event:**
+```json
+{
+  "type": "done",
+  "session_id": "uuid",
+  "turn_id": "uuid",
+  "total_tokens": 123
+}
+```
+
+**Reset Acknowledgment:**
+```json
+{
+  "type": "reset",
+  "session_id": "uuid"
+}
+```
+
+**Error Event:**
+```json
+{
+  "type": "error",
+  "session_id": "uuid-or-null",
+  "turn_id": "uuid-or-null",
+  "error": "error message",
+  "code": "ERROR_CODE"
+}
+```
+
+**Error Codes:**
+- `INVALID_JSON` - Malformed JSON
+- `MISSING_FIELD` - Required field missing
+- `INVALID_MESSAGE_TYPE` - Unknown message type
+- `EMPTY_CONTENT` - Content is empty or whitespace-only
+- `CONTENT_TOO_LONG` - Content exceeds 2000 characters
+- `INVALID_SESSION` - Session not found or invalid UUID
+- `SESSION_BUSY` - Another request is in progress for this session
+- `MODEL_ERROR` - Ollama error occurred
+- `SERVER_ERROR` - Internal server error
+
+**Validation Rules:**
+- `content`: Required, non-empty, max 2000 characters
+- `session_id`: Optional (auto-created), must be valid UUID if provided
+- `type`: Required, must be "message" or "reset"
+
+**Session Behavior:**
+- If `session_id` is `null` or omitted, a new session is created
+- Session ID is returned in the `start` event
+- Sessions are in-memory only (lost on server restart)
+- Session timeout: 1 hour of inactivity (not yet enforced)
+- Reset clears conversation history but keeps the session ID
+
+**Streaming:**
+- Chunks are forwarded from Ollama as received
+- Chunks may be sub-word tokens or multiple words
+- Frontend should append chunks without assuming word boundaries
+- Incomplete streams never enter conversation history
 
 ---
 
