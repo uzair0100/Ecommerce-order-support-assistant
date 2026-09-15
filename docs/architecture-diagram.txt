@@ -1,0 +1,157 @@
+# GadgetMart Assistant - System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                          USER (Browser)                              │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │
+                                 │ HTTP (port 8080)
+                                 │
+┌────────────────────────────────▼────────────────────────────────────┐
+│                     FRONTEND (Static HTML/CSS/JS)                    │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  index.html                                                   │   │
+│  │  - Chat interface UI                                          │   │
+│  │  - Message input with validation                              │   │
+│  │  - Sample question buttons                                    │   │
+│  │  - Character counter, timestamps                              │   │
+│  │  - Reset / Send controls                                      │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  app.js (WebSocket Client)                                    │   │
+│  │  - WebSocket connection management                            │   │
+│  │  - Event handlers (start/chunk/done/error/reset)             │   │
+│  │  - Streaming message display                                  │   │
+│  │  - Auto-reconnect logic (5 attempts)                          │   │
+│  │  - Session state management                                   │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  style.css                                                    │   │
+│  │  - Black & cyan GadgetMart theme                              │   │
+│  │  - Responsive layout (900px max-width)                        │   │
+│  │  - Mobile breakpoints (768px, 480px)                          │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │
+                                 │ WebSocket (ws://localhost:8000/ws/chat)
+                                 │ JSON Protocol: {type, session_id, content}
+                                 │
+┌────────────────────────────────▼────────────────────────────────────┐
+│                    BACKEND (FastAPI + Python 3.11)                   │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  main.py                                                      │   │
+│  │  - FastAPI application setup                                  │   │
+│  │  - CORS middleware (localhost origins)                        │   │
+│  │  - Lifespan context manager                                   │   │
+│  │  - /health REST endpoint                                      │   │
+│  │  - /ws/chat WebSocket endpoint                                │   │
+│  └──────────────────────┬───────────────────────────────────────┘   │
+│                         │                                            │
+│  ┌──────────────────────▼───────────────────────────────────────┐   │
+│  │  websocket_handler.py                                         │   │
+│  │  - WebSocket connection lifecycle                             │   │
+│  │  - Message validation (type, length, format)                  │   │
+│  │  - Protocol: start → chunk → done/error                       │   │
+│  │  - Reset handling (new session ID)                            │   │
+│  │  - Error codes (EMPTY_CONTENT, SESSION_BUSY, etc.)            │   │
+│  └──────────────────────┬───────────────────────────────────────┘   │
+│                         │                                            │
+│  ┌──────────────────────▼───────────────────────────────────────┐   │
+│  │  conversation_manager.py                                      │   │
+│  │  - Session storage (UUID-based, in-memory)                    │   │
+│  │  - Thread safety (threading.Lock per session)                 │   │
+│  │  - History management (10 turns + summaries)                  │   │
+│  │  - Context window control (max 32K tokens)                    │   │
+│  │  - Reset / Create / Get session methods                       │   │
+│  └──────────────────────┬───────────────────────────────────────┘   │
+│                         │                                            │
+│  ┌──────────────────────▼───────────────────────────────────────┐   │
+│  │  prompt_builder.py                                            │   │
+│  │  - System prompt construction                                 │   │
+│  │  - Loads gadgetmart_facts.txt (products, policies)            │   │
+│  │  - Builds chat messages list (system + history + user)        │   │
+│  │  - Injects session summaries if context is long              │   │
+│  └──────────────────────┬───────────────────────────────────────┘   │
+│                         │                                            │
+│  ┌──────────────────────▼───────────────────────────────────────┐   │
+│  │  ollama_client.py                                             │   │
+│  │  - HTTP client for Ollama /api/chat endpoint                  │   │
+│  │  - Async streaming (chat_stream via httpx)                    │   │
+│  │  - Sync non-streaming (chat via requests)                     │   │
+│  │  - Health check (Ollama availability)                         │   │
+│  │  - Timeout handling (10s connect, 180s read)                  │   │
+│  └──────────────────────┬───────────────────────────────────────┘   │
+│                         │                                            │
+│  ┌──────────────────────▼───────────────────────────────────────┐   │
+│  │  gadgetmart_facts.txt                                         │   │
+│  │  - 5 product specifications (headphones, stand, keyboard,     │   │
+│  │    webcam, power bank)                                        │   │
+│  │  - Shipping policy (£50 free threshold, 3-5 days)             │   │
+│  │  - Return policies (14-day change-of-mind, 30-day faulty)     │   │
+│  │  - Tracking guidance (no live lookup capability)              │   │
+│  │  - Domain boundaries (no order/inventory access)              │   │
+│  └───────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │
+                                 │ HTTP (localhost:11434/api/chat)
+                                 │ JSON: {model, messages, stream, options}
+                                 │
+┌────────────────────────────────▼────────────────────────────────────┐
+│                      OLLAMA (Local Inference Engine)                 │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  Model: qwen2.5:1.5b-instruct                                 │   │
+│  │  - 1.5 billion parameters                                     │   │
+│  │  - Q4_K_M quantization (CPU-optimized)                        │   │
+│  │  - 32,768 token context window                                │   │
+│  │  - Temperature: 0 (deterministic)                             │   │
+│  │  - No tools, no RAG, pure chat completion                     │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │
+                                 │ Generates tokens (streaming)
+                                 │
+┌────────────────────────────────▼────────────────────────────────────┐
+│                         LLM INFERENCE (CPU-only)                     │
+│  - Hardware: Intel i7-8650U @ 1.90 GHz, 8GB RAM                     │
+│  - Performance: ~10 tokens/sec, 2-20s TTFT                           │
+│  - No GPU acceleration (assignment requirement)                      │
+└──────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════
+
+DATA FLOW: User Query → Response
+
+1. User types message in browser (frontend/index.html)
+2. JavaScript validates (app.js): non-empty, ≤2000 chars
+3. WebSocket sends: {type: "message", session_id, content}
+4. Backend receives (websocket_handler.py)
+5. Validates message format, session ID
+6. Calls conversation_manager.get_response(session_id, content)
+7. Manager retrieves session history (if exists) or creates new
+8. prompt_builder constructs messages list:
+   - System prompt (gadgetmart_facts.txt)
+   - Session summary (if context > 10 turns)
+   - Last 10 turns of history
+   - Current user message
+9. ollama_client.chat_stream(messages) → Ollama HTTP request
+10. Ollama loads Qwen2.5 model, generates tokens (streaming)
+11. Backend yields chunks: {type: "chunk", content: "..."}
+12. Frontend appends each chunk to message bubble in real-time
+13. On completion, backend sends: {type: "done", turn_id, total_tokens}
+14. Frontend finalizes message (adds copy button, enables input)
+15. Session history updated with user + assistant messages
+
+═══════════════════════════════════════════════════════════════════════
+
+KEY DESIGN PRINCIPLES:
+
+✅ Pure CPU Inference (no cloud, no GPU)
+✅ No External APIs (no RAG, tools, or function calling)
+✅ Streaming UX (word-by-word, not batch)
+✅ Session Isolation (UUID per user, thread-safe)
+✅ Domain Boundaries (no fabricated order/inventory access)
+✅ Graceful Failures (health checks, reconnection, error handling)
+
+═══════════════════════════════════════════════════════════════════════
+```
