@@ -1,0 +1,85 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Models - NEVER commit LLM model files
+*.gguf
+*.bin
+*.safetensors
+models/
+ollama_models/
+
+# Secrets and credentials
+.env
+.env.local
+*.pem
+*.key
+config/secrets.json
+
+# Logs
+*.log
+logs/
+
+# Cache
+.cache/
+*.cache
+
+# Node/Frontend (if used later)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.next/
+out/
+build/
+
+# Local data and test artifacts
+data/
+*.db
+*.sqlite
+test_results/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
