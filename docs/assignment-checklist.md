@@ -19,12 +19,12 @@ This document maps assignment requirements to implementation evidence and comple
 
 | Requirement | Implementation | Status | Evidence |
 |------------|----------------|--------|----------|
-| Selected domain: E-Commerce Order Support | Documented | ✅ Complete | README.md |
-| Written use-case description | Phase I | ⬜ Pending | - |
-| At least 3 example dialogues | Phase I | ⬜ Pending | - |
-| Conversation flow with stages | Phase I | ⬜ Pending | - |
-| Handle topic changes mid-conversation | Phase I design | ⬜ Pending | - |
-| Refuse irrelevant queries with strategy | Phase I design | ⬜ Pending | - |
+| Selected domain: E-Commerce Order Support | GadgetMart (UK electronics) | ✅ Complete | docs/store-facts.md, README.md |
+| Written use-case description | Phase I | ✅ Complete | README.md - Use Case Description |
+| At least 3 example dialogues | 4 dialogues created | ✅ Complete | README.md - Example Dialogues |
+| Conversation flow with stages | Phase I | ✅ Complete | README.md - Conversation Flow Design |
+| Handle topic changes mid-conversation | Phase I design | ✅ Complete | README.md - Topic Switching Behavior |
+| Refuse irrelevant queries with strategy | Phase I design | ✅ Complete | README.md - Off-Topic Detection |
 
 ### Phase II - Local LLM Selection
 
@@ -159,8 +159,8 @@ Before submission, verify **NONE** of these are present:
 
 | Phase | Date Completed | Manual Test Pass | Ready for Next Phase |
 |-------|----------------|------------------|---------------------|
-| Phase 0: Setup | - | - | ⬜ |
-| Phase I: Business Case | - | - | ⬜ |
+| Phase 0: Setup | Sept 15, 2026 | ✅ | ✅ |
+| Phase I: Business Case | Sept 15, 2026 | ⬜ Pending User Review | ⬜ |
 | Phase II: Model Selection | - | - | ⬜ |
 | Phase III: Conversation Manager | - | - | ⬜ |
 | Phase IV: Backend API | - | - | ⬜ |
