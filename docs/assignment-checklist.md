@@ -40,11 +40,11 @@ This document maps assignment requirements to implementation evidence and comple
 
 | Requirement | Implementation | Status | Evidence |
 |------------|----------------|--------|----------|
-| Maintain dialogue history per session | Phase III | ⬜ Pending | - |
-| Enforce domain conversational policies | Phase III | ⬜ Pending | - |
-| Clean turn-taking logic | Phase III | ⬜ Pending | - |
-| Structured system prompts | Phase III | ⬜ Pending | - |
-| Context faithfulness across turns | Phase III | ⬜ Pending | - |
+| Maintain dialogue history per session | Phase III | ✅ Complete | backend/conversation_manager.py |
+| Enforce domain conversational policies | Phase III | ✅ Complete | backend/gadgetmart_facts.txt in system prompt |
+| Clean turn-taking logic | Phase III | ✅ Complete | Per-session threading.Lock() |
+| Structured system prompts | Phase III | ✅ Complete | backend/prompt_builder.py |
+| Context faithfulness across turns | Phase III | ✅ Complete | Session summaries + bounded history |
 | **No tools, agents, plugins, or RAG** | Design constraint | ✅ Enforced | Architecture |
 
 ### Phase IV - Backend API
@@ -160,8 +160,10 @@ Before submission, verify **NONE** of these are present:
 | Phase | Date Completed | Manual Test Pass | Ready for Next Phase |
 |-------|----------------|------------------|---------------------|
 | Phase 0: Setup | Sept 15, 2026 | ✅ | ✅ |
-| Phase I: Business Case | Sept 15, 2026 | ⬜ Pending User Review | ⬜ |
-| Phase II: Model Selection | - | - | ⬜ |
+| Phase I: Business Case | Sept 15, 2026 | ✅ | ✅ |
+| Phase II: Model Selection | Sept 15, 2026 | ✅ | ✅ |
+| Phase III: Conversation Manager | Sept 15, 2026 | ⬜ Pending User Testing | ⬜ |
+| Phase IV: Backend API | - | - | ⬜ |
 | Phase III: Conversation Manager | - | - | ⬜ |
 | Phase IV: Backend API | - | - | ⬜ |
 | Phase V: Web Interface | - | - | ⬜ |

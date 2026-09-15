@@ -101,3 +101,57 @@ Phase I establishes the complete domain knowledge and conversation design that w
 - Each prompt includes date, context, full prompt text, output summary, and rationale
 - Edits made to AI-generated code are tracked in git commit messages
 - For viva: be prepared to explain why each prompt was structured that way and what alternatives were considered
+
+
+### Prompt 3.1 - Phase III Implementation
+**Date:** September 15, 2026  
+**Tool:** Kiro AI Assistant  
+**Context:** Implementing conversation manager after Phase I & II completion
+
+**Prompt:**
+> Structure: Use backend/ with conversation_manager.py, prompt_builder.py, ollama_client.py, and config.py. Keep GadgetMart facts in separate gadgetmart_facts.txt. Memory: Set num_ctx=4096, keep latest user message + compact summary + ~8 turns, trim oldest first. Testing: Create CLI harness for manual testing AND pytest tests for trimming, topic switches, reset, session isolation. Ollama: Use /api/chat endpoint with role messages, temperature=0, stream=false for Phase III. Design client to support streaming in Phase IV. Storage: In-memory dictionary with per-session turn guard. Document sessions disappear on restart.
+
+**Output:**
+- Created `backend/` directory structure with all Phase III components
+- `backend/config.py` - Configuration with Ollama settings, memory limits
+- `backend/gadgetmart_facts.txt` - Fixed store facts (separate from code)
+- `backend/ollama_client.py` - HTTP client using /api/chat endpoint
+- `backend/prompt_builder.py` - System prompt construction, history trimming, session summaries
+- `backend/conversation_manager.py` - Session orchestration with thread-safe turn-taking
+- `backend/cli_test.py` - Interactive CLI test harness
+- `backend/requirements.txt` - Python dependencies
+- `backend/README.md` - Complete Phase III documentation
+- `tests/test_conversation_manager.py` - Pytest tests for sessions, trimming, isolation
+- `tests/test_prompt_builder.py` - Pytest tests for prompt building, summaries
+- Updated main `README.md` with Phase III setup instructions
+
+**Key Implementation Details:**
+- In-memory session storage using dictionary
+- Per-session threading.Lock() for turn-taking guard
+- Ollama /api/chat endpoint (structured messages)
+- Session summary tracks: current product, tracking status, return type
+- Never summarizes claimed order status as verified
+- History trimming removes oldest complete turn pairs
+- Temperature=0 for deterministic responses
+- num_ctx=4096 (explicit context window)
+- Stream support designed in, implementation deferred to Phase IV
+
+**Compliance Check:**
+✅ No tools, agents, plugins, or RAG  
+✅ No persistent database (in-memory only)  
+✅ Fixed GadgetMart facts (no retrieval)  
+✅ Structured prompts with conversation history  
+✅ Turn-taking logic (thread-safe)  
+✅ Context faithfulness (session summaries)  
+✅ Bounded memory with trimming  
+
+**Rationale:**
+Phase III provides the core conversation orchestration needed before adding the WebSocket API in Phase IV. Separation of concerns (manager, prompt builder, client) makes the system testable and allows Phase IV to add streaming without rewriting the core logic. The CLI harness enables manual multi-turn testing while pytest tests catch regressions in key behaviors (trimming, isolation, reset).
+
+---
+
+## Phase IV - Backend API Implementation
+
+*(Prompts will be added as Phase IV begins)*
+
+---

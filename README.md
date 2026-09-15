@@ -37,12 +37,12 @@ GadgetMart, all products, prices, policies, and contact details are entirely fic
 
 ---
 
-## Technology Stack (Planned)
+## Technology Stack
 
-- **Model:** TBD (Qwen 2.5 1.5B Instruct or Phi3 3.8B, Q4 quantization)
+- **Model:** Qwen 2.5 1.5B Instruct (Q4_K_M quantization) ✅ Selected
 - **Inference:** Ollama (local CPU-only)
-- **Backend:** FastAPI + WebSocket
-- **Frontend:** Simple HTML/CSS/JavaScript chat interface
+- **Backend:** FastAPI + WebSocket (Phase IV)
+- **Frontend:** Simple HTML/CSS/JavaScript chat interface (Phase V)
 - **Deployment Bonus:** Vercel (planned)
 
 ---
@@ -51,12 +51,33 @@ GadgetMart, all products, prices, policies, and contact details are entirely fic
 
 ```
 /
-├── backend/          (Phase IV - FastAPI application)
-├── frontend/         (Phase V - Web chat UI)
-├── scripts/          (Phase II - Benchmark and testing scripts)
-├── docs/             (Documentation and planning artifacts)
+├── backend/          ✅ Phase III - Conversation manager
+│   ├── __init__.py
+│   ├── config.py
+│   ├── gadgetmart_facts.txt
+│   ├── ollama_client.py
+│   ├── prompt_builder.py
+│   ├── conversation_manager.py
+│   ├── cli_test.py
+│   ├── requirements.txt
+│   └── README.md
+├── tests/            ✅ Phase III - Unit tests
+│   ├── __init__.py
+│   ├── test_conversation_manager.py
+│   └── test_prompt_builder.py
+├── scripts/          ✅ Phase II - Benchmarking
+│   ├── benchmark_models.py
+│   ├── benchmark_prompts.json
+│   ├── benchmark_results.json
+│   └── BENCHMARK_CHANGES.md
+├── docs/             ✅ Documentation
 │   ├── assignment-checklist.md
-│   └── prompts.md
+│   ├── model-benchmark.md
+│   ├── model-selection.md
+│   ├── prompts.md
+│   └── store-facts.md
+├── frontend/         (Phase V - Web chat UI)
+├── .gitignore
 └── README.md         (This file)
 ```
 
@@ -65,9 +86,9 @@ GadgetMart, all products, prices, policies, and contact details are entirely fic
 ## Development Phases
 
 - [x] **Phase 0:** Repository setup and compliance baseline
-- [ ] **Phase I:** Business case, store facts, and conversation design
-- [ ] **Phase II:** Model selection and benchmarking
-- [ ] **Phase III:** Conversation manager and prompt orchestration
+- [x] **Phase I:** Business case, store facts, and conversation design
+- [x] **Phase II:** Model selection and benchmarking
+- [x] **Phase III:** Conversation manager and prompt orchestration
 - [ ] **Phase IV:** FastAPI backend with WebSocket streaming
 - [ ] **Phase V:** Web-based chat interface
 - [ ] **Phase VI:** Testing, evaluation, and final documentation
@@ -76,7 +97,57 @@ GadgetMart, all products, prices, policies, and contact details are entirely fic
 
 ## Setup Instructions
 
-*(Will be added after implementation phases)*
+### Prerequisites
+
+- Python 3.11+
+- Ollama installed and running
+- Model: `qwen2.5:1.5b-instruct`
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/uzair0100/Ecommerce-order-support-assistant.git
+   cd Ecommerce-order-support-assistant
+   ```
+
+2. **Install Python dependencies**
+   ```bash
+   pip install -r backend/requirements.txt
+   ```
+
+3. **Start Ollama**
+   ```bash
+   ollama serve
+   ```
+
+4. **Verify model is available**
+   ```bash
+   ollama list
+   ```
+   
+   If `qwen2.5:1.5b-instruct` is not listed:
+   ```bash
+   ollama pull qwen2.5:1.5b-instruct
+   ```
+
+### Running Phase III (Current)
+
+**CLI Test Harness:**
+```bash
+python -m backend.cli_test
+```
+
+**Commands:**
+- `/reset` - Clear session history
+- `/new` - Start new session
+- `/info` - Show session info
+- `/exit` - Exit
+
+**Automated Tests:**
+```bash
+pytest tests/ -v
+```
 
 ---
 
