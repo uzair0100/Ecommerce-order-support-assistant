@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="GadgetMart Order Support Assistant - AI-powered customer service">
+    <title>GadgetMart Support Assistant</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="logo">
+                <span class="logo-gadget">Gadget</span><span class="logo-mart">Mart</span>
+            </h1>
+            <p class="tagline">Order Support Assistant</p>
+        </div>
+    </header>
+
+    <!-- Main Chat Container -->
+    <main class="container">
+        <!-- Connection Status -->
+        <div class="status-bar" id="statusBar">
+            <span class="status-indicator" id="statusIndicator"></span>
+            <span class="status-text" id="statusText">Connecting...</span>
+        </div>
+
+        <!-- Sample Questions -->
+        <div class="sample-questions" id="sampleQuestions">
+            <p class="sample-title">Quick Questions:</p>
+            <div class="sample-buttons">
+                <button class="sample-btn" data-question="How do I track my order?">
+                    📦 How do I track my order?
+                </button>
+                <button class="sample-btn" data-question="What is your return policy?">
+                    ↩️ What is your return policy?
+                </button>
+                <button class="sample-btn" data-question="Tell me about the wireless headphones">
+                    🎧 Tell me about the wireless headphones
+                </button>
+                <button class="sample-btn" data-question="What are your delivery options?">
+                    🚚 What are your delivery options?
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Messages -->
+        <div class="chat-container" id="chatContainer">
+            <div class="welcome-message">
+                <h2>👋 Welcome to GadgetMart Support!</h2>
+                <p>I'm here to help you with orders, returns, product information, and delivery questions.</p>
+                <p class="welcome-note">Ask me anything about your GadgetMart shopping experience.</p>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea 
+                    id="messageInput" 
+                    class="message-input" 
+                    placeholder="Type your message here..."
+                    rows="1"
+                    maxlength="2000"
+                ></textarea>
+                <div class="input-controls">
+                    <span class="char-counter" id="charCounter">0/2000</span>
+                    <button class="reset-btn" id="resetBtn" title="Reset conversation">
+                        🔄 Reset
+                    </button>
+                    <button class="send-btn" id="sendBtn" title="Send message">
+                        Send ➤
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 GadgetMart | Powered by Local AI (Qwen2.5 1.5B) | NLP Assignment 1</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
